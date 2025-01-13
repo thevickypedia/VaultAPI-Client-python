@@ -1,4 +1,5 @@
 import argparse
+import json
 
 from .main import decrypt  # noqa: F401
 
@@ -12,24 +13,26 @@ def commandline():
         "-V", "--version", action="store_true", help="Show version information"
     )
     parser.add_argument("--decipher", help="Decipher a given ciphertext")
-    parser.add_argument("--get-secret", help="Retrieve a secret from Vault using the secret key")
+    parser.add_argument(
+        "--get-secret", help="Retrieve a secret from Vault using the secret key"
+    )
     parser.add_argument(
         "--get-secrets",
-        help="Retrieve multiple secrets from Vault with a comma separated list of keys"
+        help="Retrieve multiple secrets from Vault with a comma separated list of keys",
     )
     parser.add_argument(
         "--table",
         help="Table name where the secrets are stored. "
-             "Can be used with --get-secret/--get-secrets or itself to retrieve all the secrets in a table"
+        "Can be used with --get-secret/--get-secrets or itself to retrieve all the secrets in a table",
     )
     args = parser.parse_args()
     if args.version:
         print(f"VaultAPI Client: {version}")
         exit(0)
     if args.decipher:
-        print(decrypt(cipher=args.decipher))
+        print(json.dumps(decrypt(cipher=args.decipher), indent=2))
         exit(0)
     kwargs = dict(args._get_kwargs())
     kwargs.pop("version", None)
     kwargs.pop("decipher", None)
-    print(decrypt(**kwargs))
+    print(json.dumps(decrypt(**kwargs), indent=2))
