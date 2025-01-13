@@ -86,7 +86,7 @@ pre-commit run --all-files
 Licensed under the [MIT License][license]
 
 [label-actions-markdown]: https://github.com/thevickypedia/VaultAPI-Client-python/actions/workflows/markdown.yml/badge.svg
-[label-pypi-package]: https://img.shields.io/badge/Pypi%20Package-VaultAPI-Client-blue?style=for-the-badge&logo=Python
+[label-pypi-package]: https://img.shields.io/badge/Pypi%20Package-VaultAPI_Client-blue?style=for-the-badge&logo=Python
 [label-pyversion]: https://img.shields.io/badge/python-3.10%20%7C%203.11-blue
 [label-platform]: https://img.shields.io/badge/Platform-Linux|macOS|Windows-1f425f.svg
 [label-actions-pypi]: https://github.com/thevickypedia/VaultAPI-Client-python/actions/workflows/python-publish.yml/badge.svg

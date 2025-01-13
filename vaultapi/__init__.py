@@ -3,7 +3,7 @@ import json
 
 from .main import decrypt  # noqa: F401
 
-version = "0.0.1a0"
+version = "0.0.1"
 
 
 def commandline():
