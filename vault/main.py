@@ -5,12 +5,12 @@ import os
 import time
 from typing import Any, ByteString, Dict
 
-import requests
 import dotenv
+import requests
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 env_file = os.environ.get("ENV_FILE") or os.environ.get("env_file") or ".env"
-dotenv.load_env(env_file)
+dotenv.load_dotenv(env_file)
 
 VAULT_SERVER = os.environ.get("VAULT_SERVER") or os.environ.get("vault_server")
 APIKEY = os.environ.get("APIKEY") or os.environ.get("apikey")
@@ -30,7 +30,15 @@ def urljoin(*args) -> str:
 
 
 def transit_decrypt(ciphertext: str | ByteString) -> Dict[str, Any]:
-    """Decrypt transit encrypted payload."""
+    """Decrypt transit encrypted payload.
+
+    Args:
+        ciphertext: Ciphertext to decrypt.
+
+    Returns:
+        Dict[str, str]:
+        Returns a dictionary of decrypted values.
+    """
     epoch = int(time.time()) // TRANSIT_TIME_BUCKET
     hash_object = hashlib.sha256(f"{epoch}.{APIKEY}".encode())
     aes_key = hash_object.digest()[:TRANSIT_KEY_LENGTH]
@@ -41,7 +49,16 @@ def transit_decrypt(ciphertext: str | ByteString) -> Dict[str, Any]:
 
 
 def get_cipher(server_url: str, query_params: Dict[str, str]) -> str:
-    """Get ciphertext from the server."""
+    """Get ciphertext from the server.
+
+    Args:
+        server_url: Server URL to make the request to.
+        query_params: Query parameters to send with the request.
+
+    Returns:
+        str:
+        Returns the ciphertext.
+    """
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {APIKEY}",
@@ -56,23 +73,35 @@ def get_cipher(server_url: str, query_params: Dict[str, str]) -> str:
 
 
 def decrypt(
-    cipher: str = None,
-    table: str = None,
-    get_secret: str = None,
-    get_secrets: str = None,
-):
-    if not cipher:
-        assert table, "table name is required when cipher text is null"
-        params = {
-            "table_name": table,
-        }
-        if not any((get_secret, get_secrets)):
-            url = urljoin(VAULT_SERVER, "get-table")
-        elif get_secret:
-            url = urljoin(VAULT_SERVER, "get-secret")
-            params["key"] = get_secret
-        elif get_secrets:
-            url = urljoin(VAULT_SERVER, "get-secrets")
-            params["keys"] = get_secrets
-        return transit_decrypt(ciphertext=get_cipher(url, params))
-    return 
+        cipher: str = None,
+        table: str = None,
+        get_secret: str = None,
+        get_secrets: str = None,
+) -> Dict[str, str]:
+    """Decrypt function.
+
+    Args:
+        cipher: Ciphertext to decrypt.
+        table: Table name to retrieve.
+        get_secret: Secret key to retrieve.
+        get_secrets: Comma separated list of secret keys to retrieve.
+
+    Returns:
+        Dict[str, str]:
+        Returns a dictionary of decrypted values.
+    """
+    if cipher:
+        return transit_decrypt(ciphertext=cipher)
+    assert all((APIKEY, VAULT_SERVER)), \
+        "'APIKEY' and 'VAULT_SERVER' environment variables are required to connect to the server"
+    assert table, "'table' is required when cipher text is not provided"
+    params = dict(table_name=table)
+    if get_secret:
+        url = urljoin(VAULT_SERVER, "get-secret")
+        params["key"] = get_secret
+    elif get_secrets:
+        url = urljoin(VAULT_SERVER, "get-secrets")
+        params["keys"] = get_secrets
+    else:
+        url = urljoin(VAULT_SERVER, "get-table")
+    return transit_decrypt(ciphertext=get_cipher(url, params))
