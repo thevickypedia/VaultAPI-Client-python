@@ -73,10 +73,10 @@ def get_cipher(server_url: str, query_params: Dict[str, str]) -> str:
 
 
 def decrypt(
-        cipher: str = None,
-        table: str = None,
-        get_secret: str = None,
-        get_secrets: str = None,
+    cipher: str = None,
+    table: str = None,
+    get_secret: str = None,
+    get_secrets: str = None,
 ) -> Dict[str, str]:
     """Decrypt function.
 
@@ -92,8 +92,9 @@ def decrypt(
     """
     if cipher:
         return transit_decrypt(ciphertext=cipher)
-    assert all((APIKEY, VAULT_SERVER)), \
-        "'APIKEY' and 'VAULT_SERVER' environment variables are required to connect to the server"
+    assert all(
+        (APIKEY, VAULT_SERVER)
+    ), "'APIKEY' and 'VAULT_SERVER' environment variables are required to connect to the server"
     assert table, "'table' is required when cipher text is not provided"
     params = dict(table_name=table)
     if get_secret:
