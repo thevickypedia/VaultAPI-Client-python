@@ -1,4 +1,4 @@
-# VaultAPI-Client-python-
+# VaultAPI-Client-python
 Client application for VaultAPI Server
 
 ![Python][label-pyversion]
@@ -49,7 +49,7 @@ vaultapi --table mytable
 <details>
 <summary><strong>Sourcing environment variables from an env file</strong></summary>
 
-> _By default, `VaultAPI` will look for a `.env` file in the current working directory._
+> _By default, `VaultAPI-Client` will look for a `.env` file in the current working directory._
 </details>
 
 **Mandatory**
@@ -77,7 +77,7 @@ pre-commit run --all-files
 ## Pypi Package
 [![pypi-module][label-pypi-package]][pypi-repo]
 
-[https://pypi.org/project/VaultAPI-Client-python/][pypi]
+[https://pypi.org/project/VaultAPI-Client/][pypi]
 
 ## License & copyright
 
@@ -86,13 +86,13 @@ pre-commit run --all-files
 Licensed under the [MIT License][license]
 
 [label-actions-markdown]: https://github.com/thevickypedia/VaultAPI-Client-python/actions/workflows/markdown.yml/badge.svg
-[label-pypi-package]: https://img.shields.io/badge/Pypi%20Package-VaultAPI-blue?style=for-the-badge&logo=Python
+[label-pypi-package]: https://img.shields.io/badge/Pypi%20Package-VaultAPI-Client-blue?style=for-the-badge&logo=Python
 [label-pyversion]: https://img.shields.io/badge/python-3.10%20%7C%203.11-blue
 [label-platform]: https://img.shields.io/badge/Platform-Linux|macOS|Windows-1f425f.svg
 [label-actions-pypi]: https://github.com/thevickypedia/VaultAPI-Client-python/actions/workflows/python-publish.yml/badge.svg
-[label-pypi]: https://img.shields.io/pypi/v/VaultAPI-Client-python
-[label-pypi-format]: https://img.shields.io/pypi/format/VaultAPI-Client-python
-[label-pypi-status]: https://img.shields.io/pypi/status/VaultAPI-Client-python
+[label-pypi]: https://img.shields.io/pypi/v/VaultAPI-Client
+[label-pypi-format]: https://img.shields.io/pypi/format/VaultAPI-Client
+[label-pypi-status]: https://img.shields.io/pypi/status/VaultAPI-Client
 
 [3.10]: https://docs.python.org/3/whatsnew/3.10.html
 [3.11]: https://docs.python.org/3/whatsnew/3.11.html
@@ -104,7 +104,7 @@ Licensed under the [MIT License][license]
 [google-docs]: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
 [pep8]: https://www.python.org/dev/peps/pep-0008/
 [isort]: https://pycqa.github.io/isort/
-[pypi]: https://pypi.org/project/VaultAPI
-[pypi-files]: https://pypi.org/project/VaultAPI-Client-python/#files
+[pypi]: https://pypi.org/project/VaultAPI-Client
+[pypi-files]: https://pypi.org/project/VaultAPI-Client/#files
 [pypi-repo]: https://packaging.python.org/tutorials/packaging-projects/
 [license]: https://github.com/thevickypedia/VaultAPI-Client-python/blob/main/LICENSE
