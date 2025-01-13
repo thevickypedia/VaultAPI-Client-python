@@ -18,6 +18,12 @@ APIKEY = os.environ.get("APIKEY") or os.environ.get("apikey")
 TRANSIT_TIME_BUCKET = os.environ.get("TRANSIT_TIME_BUCKET", 60)
 TRANSIT_KEY_LENGTH = os.environ.get("TRANSIT_KEY_LENGTH", 60)
 
+SESSION = requests.Session()
+SESSION.headers = {
+    "accept": "application/json",
+    "Authorization": f"Bearer {APIKEY}",
+}
+
 
 def urljoin(*args) -> str:
     """Joins given arguments into an url. Trailing but not leading slashes are stripped for each argument.
@@ -59,15 +65,74 @@ def get_cipher(server_url: str, query_params: Dict[str, str]) -> str:
         str:
         Returns the ciphertext.
     """
-    headers = {
-        "accept": "application/json",
-        "Authorization": f"Bearer {APIKEY}",
-    }
-    response = requests.get(
+    response = SESSION.get(
         server_url,
         params=query_params,
-        headers=headers,
     )
+    assert response.ok, response.text
+    return response.json()["detail"]
+
+
+def update_secret(key: str, value: str, table_name: str) -> Dict[str, str]:
+    """Update or create a new secret in the vault.
+
+    Args:
+        key: Key for the secret.
+        value: Value for the secret.
+        table_name: Table name.
+
+    Returns:
+        Dict[str, str]:
+        Returns the server response.
+    """
+    url = urljoin(VAULT_SERVER, "put-secret")
+    response = SESSION.put(
+        url,
+        json={
+            "key": key,
+            "value": value,
+            "table_name": table_name,
+        },
+    )
+    assert response.ok, response.text
+    return response.json()["detail"]
+
+
+def delete_secret(key: str, table_name: str) -> Dict[str, str]:
+    """Delete a secret from the vault.
+
+    Args:
+        key: Key for the secret.
+        table_name: Table name.
+
+    Returns:
+        Dict[str, str]:
+        Returns the server response.
+    """
+    url = urljoin(VAULT_SERVER, "delete-secret")
+    response = SESSION.delete(
+        url,
+        json={
+            "key": key,
+            "table_name": table_name,
+        },
+    )
+    assert response.ok, response.text
+    return response.json()["detail"]
+
+
+def create_table(table_name: str) -> Dict[str, str]:
+    """Creates a new table in the vault.
+
+    Args:
+        table_name: Table name.
+
+    Returns:
+        Dict[str, str]:
+        Returns the server response.
+    """
+    url = urljoin(VAULT_SERVER, "create-table")
+    response = SESSION.post(url, params={"table_name": table_name})
     assert response.ok, response.text
     return response.json()["detail"]
 
