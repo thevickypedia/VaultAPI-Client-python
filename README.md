@@ -52,8 +52,8 @@ vaultapi --table mytable
 > _By default, `VaultAPI-Client` will look for a `.env` file in the current working directory._
 </details>
 
-**Mandatory**
 - **APIKEY** - API Key for authentication.
+- **SECRET** - Secret key used for transit encryption.
 - **VAULT_SERVER** - VaultAPI server URL.
 
 ## Coding Standards

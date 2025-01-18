@@ -1,4 +1,4 @@
-name: Build and Publish (PyPi)
+name: Build and Publish
 
 on:
   release:

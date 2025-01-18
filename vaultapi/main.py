@@ -14,6 +14,7 @@ dotenv.load_dotenv(env_file)
 
 VAULT_SERVER = os.environ.get("VAULT_SERVER") or os.environ.get("vault_server")
 APIKEY = os.environ.get("APIKEY") or os.environ.get("apikey")
+SECRET = os.environ.get("SECRET") or os.environ.get("secret")
 
 TRANSIT_TIME_BUCKET = os.environ.get("TRANSIT_TIME_BUCKET", 60)
 TRANSIT_KEY_LENGTH = os.environ.get("TRANSIT_KEY_LENGTH", 60)
@@ -45,8 +46,12 @@ def transit_decrypt(ciphertext: str | ByteString) -> Dict[str, Any]:
         Dict[str, str]:
         Returns a dictionary of decrypted values.
     """
+    assert SECRET, (
+        "\n\t'SECRET' environment variable is required to decrypt the cipher!"
+        "\n\tSet 'RAW_CIPHER=1' to skip transit decryption"
+    )
     epoch = int(time.time()) // TRANSIT_TIME_BUCKET
-    hash_object = hashlib.sha256(f"{epoch}.{APIKEY}".encode())
+    hash_object = hashlib.sha256(f"{epoch}.{APIKEY}.{SECRET}".encode())
     aes_key = hash_object.digest()[:TRANSIT_KEY_LENGTH]
     if isinstance(ciphertext, str):
         ciphertext = base64.b64decode(ciphertext)
@@ -142,7 +147,8 @@ def decrypt(
     table: str = None,
     get_secret: str = None,
     get_secrets: str = None,
-) -> Dict[str, str]:
+    raw_cipher: bool = os.environ.get("RAW_CIPHER", "").lower() in ("1", "true"),
+) -> Dict[str, str] | str:
     """Decrypt function.
 
     Args:
@@ -150,6 +156,7 @@ def decrypt(
         table: Table name to retrieve.
         get_secret: Secret key to retrieve.
         get_secrets: Comma separated list of secret keys to retrieve.
+        raw_cipher: Boolean flag to return the raw cipher without transit decryption.
 
     Returns:
         Dict[str, str]:
@@ -170,4 +177,7 @@ def decrypt(
         params["keys"] = get_secrets
     else:
         url = urljoin(VAULT_SERVER, "get-table")
-    return transit_decrypt(ciphertext=get_cipher(url, params))
+    cipher_text = get_cipher(url, params)
+    if raw_cipher:
+        return cipher_text
+    return transit_decrypt(cipher_text)
