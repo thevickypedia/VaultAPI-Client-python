@@ -1,5 +1,7 @@
+import os
 from typing import Any, Dict, List
 
+import dotenv
 import requests
 
 from vaultapi.aws import LOGGER
@@ -51,6 +53,20 @@ class VaultAPIClient:
             params=query_params,
         )
         return process_response(response)
+
+    def dotenv_to_table(self, table_name: str, dotenv_file: str) -> Dict[str, str]:
+        """Store all the env vars from a .env file into the database.
+
+        Args:
+            table_name: Name of the table to store secrets.
+            dotenv_file: Dot env filename.
+        """
+        try:
+            assert os.path.isfile(dotenv_file)
+        except AssertionError:
+            raise FileNotFoundError(dotenv_file)
+        env_vars = dotenv.dotenv_values(dotenv_file)
+        return self.update_secret(secrets=env_vars, table_name=table_name)
 
     def update_secret(self, secrets: Dict[str, str], table_name: str) -> Dict[str, str]:
         """Update or create secrets in the vault.
