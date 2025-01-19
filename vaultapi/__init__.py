@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from .main import decrypt  # noqa: F401
+from .main import LOGGER, VaultAPIClient, VaultAPIClientError  # noqa: F401
 
 version = "0.0.1"
 
@@ -12,7 +12,12 @@ def commandline():
     parser.add_argument(
         "-V", "--version", action="store_true", help="Show version information"
     )
-    parser.add_argument("--decipher", help="Decipher a given ciphertext")
+    parser.add_argument(
+        "--aws",
+        action="store_true",
+        help="Flag to use AWS parameter store and secrets manager to retrieve the server credentials. "
+             "Requires 'pip install VaultAPI-Client[aws]'"
+    )
     parser.add_argument(
         "--get-secret", help="Retrieve a secret from Vault using the secret key"
     )
@@ -29,10 +34,8 @@ def commandline():
     if args.version:
         print(f"VaultAPI Client: {version}")
         exit(0)
-    if args.decipher:
-        print(json.dumps(decrypt(cipher=args.decipher), indent=2))
-        exit(0)
+    vaultapi_client = VaultAPIClient(args.aws)
     kwargs = dict(args._get_kwargs())
     kwargs.pop("version", None)
-    kwargs.pop("decipher", None)
-    print(json.dumps(decrypt(**kwargs), indent=2))
+    kwargs.pop("aws", None)
+    print(json.dumps(vaultapi_client.decrypt(**kwargs), indent=2))

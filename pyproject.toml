@@ -25,6 +25,7 @@ version = {attr = "vaultapi.version"}
 
 [project.optional-dependencies]
 dev = ["pre-commit"]
+aws = ["boto3==1.36.*"]
 
 [project.scripts]
 # sends all the args to commandline function, where the arbitary commands as processed accordingly
