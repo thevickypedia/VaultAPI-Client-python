@@ -23,8 +23,6 @@ class EndpointMapping:
     get_table: str = "/get-table"
     get_secret: str = "/get-secret"
     put_secret: str = "/put-secret"
-    get_secrets: str = "/get-secrets"
-    put_secrets: str = "/put-secrets"
     list_tables: str = "/list-tables"
     create_table: str = "/create-table"
     delete_secret: str = "/delete-secret"

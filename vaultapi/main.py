@@ -52,12 +52,11 @@ class VaultAPIClient:
         )
         return process_response(response)
 
-    def update_secret(self, key: str, value: str, table_name: str) -> Dict[str, str]:
-        """Update or create a new secret in the vault.
+    def update_secret(self, secrets: Dict[str, str], table_name: str) -> Dict[str, str]:
+        """Update or create secrets in the vault.
 
         Args:
-            key: Key for the secret.
-            value: Value for the secret.
+            secrets: Key value pairs with multiple secrets.
             table_name: Table name.
 
         Returns:
@@ -68,31 +67,7 @@ class VaultAPIClient:
         response = self.SESSION.put(
             url,
             json={
-                "key": key,
-                "value": value,
-                "table_name": table_name,
-            },
-        )
-        return process_response(response)
-
-    def update_secrets(
-        self, secrets: Dict[str, str], table_name: str
-    ) -> Dict[str, str]:
-        """Update or create multiple new secrets in the vault.
-
-        Args:
-            secrets: Key value pairs with multiple secrets.
-            table_name: Table name.
-
-        Returns:
-            Dict[str, str]:
-            Returns the server response.
-        """
-        url = urljoin(self.env_config.vault_server, server_map.put_secrets)
-        response = self.SESSION.put(
-            url,
-            json={
-                "secrets": secrets,
+                "secrets": self.transit_shield.encrypt(payload=secrets),
                 "table_name": table_name,
             },
         )
@@ -145,11 +120,11 @@ class VaultAPIClient:
         return process_response(response)
 
     def get_secret(self, key: str, table_name: str) -> Dict[str, str]:
-        """Retrieve a targeted secret from a table.
+        """Retrieves multiple secrets from a table.
 
         Args:
-            key: Name of the secret to be retrieved.
-            table_name: Name of the table where the secret is stored.
+            key: Comma separated list of secret names to be retrieved.
+            table_name: Table name.
 
         Returns:
             Dict[str, str]:
@@ -157,21 +132,6 @@ class VaultAPIClient:
         """
         url = urljoin(self.env_config.vault_server, server_map.get_secret)
         cipher_text = self._get_cipher(url, {"key": key, "table_name": table_name})
-        return self.transit_shield.decrypt(cipher_text)
-
-    def get_secrets(self, keys: str, table_name: str) -> Dict[str, str]:
-        """Retrieves multiple secrets from a table.
-
-        Args:
-            keys: Comma separated list of secret names to be retrieved.
-            table_name: Table name.
-
-        Returns:
-            Dict[str, str]:
-            Returns a dictionary of decrypted values.
-        """
-        url = urljoin(self.env_config.vault_server, server_map.get_secrets)
-        cipher_text = self._get_cipher(url, {"keys": keys, "table_name": table_name})
         return self.transit_shield.decrypt(cipher_text)
 
     def get_table(self, table_name: str) -> Dict[str, str]:
@@ -192,14 +152,12 @@ class VaultAPIClient:
         self,
         table: str,
         get_secret: str = None,
-        get_secrets: str = None,
     ) -> Dict[str, str] | str:
         """Decrypt function.
 
         Args:
             table: Table name to retrieve.
-            get_secret: Secret key to retrieve.
-            get_secrets: Comma separated list of secret keys to retrieve.
+            get_secret: Comma separated list of secret keys to retrieve.
 
         Returns:
             Dict[str, str]:
@@ -212,9 +170,6 @@ class VaultAPIClient:
         if get_secret:
             url = urljoin(self.env_config.vault_server, server_map.get_secret)
             params["key"] = get_secret
-        elif get_secrets:
-            url = urljoin(self.env_config.vault_server, server_map.get_secrets)
-            params["keys"] = get_secrets
         else:
             url = urljoin(self.env_config.vault_server, server_map.get_table)
         return self.transit_shield.decrypt(self._get_cipher(url, params))

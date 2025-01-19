@@ -34,7 +34,8 @@ import vaultapi
 
 
 if __name__ == '__main__':
-    vaultapi.decrypt(get_secret="mykey", table="mytable")
+    vaultapi_client = vaultapi.VaultAPIClient()
+    vaultapi_client.get_secret(key="mykey", table_name="mytable")
 ```
 
 **Initiate - CLI**
