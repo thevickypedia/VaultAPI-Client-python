@@ -135,6 +135,20 @@ class VaultAPIClient:
         response = self.SESSION.post(url, params={"table_name": table_name})
         return process_response(response)
 
+    def delete_table(self, table_name: str) -> Dict[str, str]:
+        """Deletes an existing table.
+
+        Args:
+            table_name: Table name.
+
+        Returns:
+            Dict[str, str]:
+            Returns the server response.
+        """
+        url = urljoin(self.env_config.vault_server, server_map.delete_table)
+        response = self.SESSION.delete(url, params={"table_name": table_name})
+        return process_response(response)
+
     def get_secret(self, key: str, table_name: str) -> Dict[str, str]:
         """Retrieves multiple secrets from a table.
 

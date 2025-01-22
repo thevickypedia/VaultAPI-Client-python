@@ -25,6 +25,7 @@ class EndpointMapping:
     put_secret: str = "/put-secret"
     list_tables: str = "/list-tables"
     create_table: str = "/create-table"
+    delete_table: str = "/delete-table"
     delete_secret: str = "/delete-secret"
 
 
