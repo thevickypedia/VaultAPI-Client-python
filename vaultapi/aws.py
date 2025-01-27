@@ -30,7 +30,7 @@ class AWSClient:
         self.secret_client = session.client(service_name="secretsmanager")
         self.ssm_client = session.client(service_name="ssm")
 
-    def get_aws_secrets(self, name: str = None) -> str | List[str]:
+    def get_aws_secrets(self, name: str = None) -> str | List[str] | None:
         """Get secrets from AWS secretsmanager.
 
         Args:
@@ -42,13 +42,17 @@ class AWSClient:
         """
         if name:
             LOGGER.info("Retrieving the secret '%s' from AWS secrets manager", name)
-            response = self.secret_client.get_secret_value(SecretId=name)
+            try:
+                response = self.secret_client.get_secret_value(SecretId=name)
+            except Exception as error:
+                LOGGER.exception(error)
+                return
             return response["SecretString"]
         paginator = self.secret_client.get_paginator("list_secrets")
         page_results = paginator.paginate().build_full_result()
         return [page["Name"] for page in page_results["SecretList"]]
 
-    def get_aws_params(self, name: str = None) -> str | List[str]:
+    def get_aws_params(self, name: str = None) -> str | List[str] | None:
         """Get SSM parameters from AWS.
 
         Args:
@@ -60,7 +64,11 @@ class AWSClient:
         """
         if name:
             LOGGER.info("Retrieving the parameter '%s' from AWS parameter store", name)
-            response = self.ssm_client.get_parameter(Name=name, WithDecryption=True)
+            try:
+                response = self.ssm_client.get_parameter(Name=name, WithDecryption=True)
+            except Exception as error:
+                LOGGER.exception(error)
+                return
             return response["Parameter"]["Value"]
         paginator = self.ssm_client.get_paginator("describe_parameters")
         page_results = paginator.paginate().build_full_result()

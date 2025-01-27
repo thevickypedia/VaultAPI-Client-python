@@ -4,7 +4,7 @@ import json
 from .exceptions import VaultAPIClientError
 from .main import LOGGER, VaultAPIClient
 
-version = "0.1.1"
+version = "0.1.2"
 
 
 def commandline():
