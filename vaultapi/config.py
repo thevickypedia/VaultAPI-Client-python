@@ -1,11 +1,12 @@
 import os
+from typing import NoReturn
 
 import dotenv
 import requests
 from cryptography.fernet import Fernet
 
 from vaultapi.aws import AWSClient
-from vaultapi.exceptions import VaultAPIClientError
+from vaultapi.exceptions import VaultAPIClientError, VaultAPIServerError
 from vaultapi.util import urljoin
 
 env_file = os.environ.get("ENV_FILE") or os.environ.get("env_file") or ".env"
@@ -48,10 +49,18 @@ class EnvConfig:
         self.transit_key_length: int = int(kwargs.get("vault_transit_key_length"))
         self.__assert__()
 
-    def __assert__(self):
+    def __assert__(self) -> None | NoReturn:
         """Run assertions for server config."""
-        response = requests.get(url=urljoin(self.vault_server, server_map.health))
-        assert response.ok, response.text
+        try:
+            response = requests.get(
+                url=urljoin(self.vault_server, server_map.health), timeout=(1, 1)
+            )
+            response.raise_for_status()
+        except requests.RequestException as error:
+            raise VaultAPIServerError(
+                message=error.response or error.__context__,
+                status_code=getattr(error.response, "status_code", None),
+            )
         try:
             assert self.transit_key_length in (16, 24, 32)
         except AssertionError:
@@ -82,7 +91,7 @@ def getenv(*args, default: str = None) -> str:
     return default
 
 
-def resolve_secrets(try_aws: bool):
+def resolve_secrets(try_aws: bool) -> EnvConfig | NoReturn:
     """Tries to retrieve the required secret from environment variable or AWS parameter or the AWS secrets manager."""
     base_env_vars = dict(
         vault_server=getenv("vault_server", "server"),

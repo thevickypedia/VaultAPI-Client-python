@@ -5,9 +5,11 @@ import secrets
 import time
 from typing import Any, ByteString, Dict
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from vaultapi.config import EnvConfig
+from vaultapi.exceptions import InvalidCipherText
 
 
 class TransitShield:
@@ -83,5 +85,8 @@ class TransitShield:
         aes_key = hash_object.digest()[: self.env_config.transit_key_length]
         if isinstance(ciphertext, str):
             ciphertext = base64.b64decode(ciphertext)
-        decrypted = AESGCM(aes_key).decrypt(ciphertext[:12], ciphertext[12:], b"")
+        try:
+            decrypted = AESGCM(aes_key).decrypt(ciphertext[:12], ciphertext[12:], b"")
+        except InvalidTag:
+            raise InvalidCipherText("Ciphertext has either expired or invalid!")
         return json.loads(decrypted)

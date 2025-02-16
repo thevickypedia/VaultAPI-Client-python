@@ -15,6 +15,7 @@ class AWSClient:
     def __init__(self):
         """Instantiates the client object."""
         try:
+            # noinspection PyPackageRequirements,PyUnresolvedReferences
             import boto3
         except ModuleNotFoundError:
             raise EnvironmentError(
@@ -46,7 +47,7 @@ class AWSClient:
                 response = self.secret_client.get_secret_value(SecretId=name)
             except Exception as error:
                 LOGGER.exception(error)
-                return
+                return None
             return response["SecretString"]
         paginator = self.secret_client.get_paginator("list_secrets")
         page_results = paginator.paginate().build_full_result()
@@ -68,7 +69,7 @@ class AWSClient:
                 response = self.ssm_client.get_parameter(Name=name, WithDecryption=True)
             except Exception as error:
                 LOGGER.exception(error)
-                return
+                return None
             return response["Parameter"]["Value"]
         paginator = self.ssm_client.get_paginator("describe_parameters")
         page_results = paginator.paginate().build_full_result()

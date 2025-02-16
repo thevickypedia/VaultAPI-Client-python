@@ -1,23 +1,13 @@
 import os
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import dotenv
-import requests
 
 from vaultapi.aws import LOGGER
 from vaultapi.config import getenv, resolve_secrets, server_map
+from vaultapi.session import Session
 from vaultapi.transit import TransitShield
 from vaultapi.util import urljoin
-
-
-def process_response(response: requests.Response) -> Any:
-    """Asserts on the response code, and returns the response detail.
-
-    Args:
-        response: Takes the Response object as an argument.
-    """
-    assert response.ok, response.text
-    return response.json()["detail"]
 
 
 class VaultAPIClient:
@@ -31,7 +21,7 @@ class VaultAPIClient:
         """Instantiates the VaultAPIClient object."""
         self.env_config = resolve_secrets(aws)
         self.transit_shield = TransitShield(self.env_config)
-        self.SESSION = requests.Session()
+        self.SESSION = Session()
         self.SESSION.headers = {
             "accept": "application/json",
             "Authorization": f"Bearer {self.env_config.vault_apikey}",
@@ -48,11 +38,10 @@ class VaultAPIClient:
             str:
             Returns the ciphertext.
         """
-        response = self.SESSION.get(
+        return self.SESSION.get(
             server_url,
             params=query_params,
         )
-        return process_response(response)
 
     def dotenv_to_table(self, table_name: str, dotenv_file: str) -> Dict[str, str]:
         """Store all the env vars from a .env file into the database.
@@ -80,14 +69,13 @@ class VaultAPIClient:
             Returns the server response.
         """
         url = urljoin(self.env_config.vault_server, server_map.put_secret)
-        response = self.SESSION.put(
+        return self.SESSION.put(
             url,
             json={
                 "secrets": self.transit_shield.encrypt(payload=secrets),
                 "table_name": table_name,
             },
         )
-        return process_response(response)
 
     def delete_secret(self, key: str, table_name: str) -> Dict[str, str]:
         """Delete a secret from the vault.
@@ -101,14 +89,13 @@ class VaultAPIClient:
             Returns the server response.
         """
         url = urljoin(self.env_config.vault_server, server_map.delete_secret)
-        response = self.SESSION.delete(
+        return self.SESSION.delete(
             url,
             json={
                 "key": key,
                 "table_name": table_name,
             },
         )
-        return process_response(response)
 
     def list_tables(self) -> List[str]:
         """List all available tables.
@@ -118,8 +105,7 @@ class VaultAPIClient:
             Returns the available table names as a list of strings.
         """
         url = urljoin(self.env_config.vault_server, server_map.list_tables)
-        response = self.SESSION.get(url)
-        return process_response(response)
+        return self.SESSION.get(url)
 
     def create_table(self, table_name: str) -> Dict[str, str]:
         """Creates a new table in the vault.
@@ -132,8 +118,7 @@ class VaultAPIClient:
             Returns the server response.
         """
         url = urljoin(self.env_config.vault_server, server_map.create_table)
-        response = self.SESSION.post(url, params={"table_name": table_name})
-        return process_response(response)
+        return self.SESSION.post(url, params={"table_name": table_name})
 
     def delete_table(self, table_name: str) -> Dict[str, str]:
         """Deletes an existing table.
@@ -146,8 +131,7 @@ class VaultAPIClient:
             Returns the server response.
         """
         url = urljoin(self.env_config.vault_server, server_map.delete_table)
-        response = self.SESSION.delete(url, params={"table_name": table_name})
-        return process_response(response)
+        return self.SESSION.delete(url, params={"table_name": table_name})
 
     def get_secret(self, key: str, table_name: str) -> Dict[str, str]:
         """Retrieves multiple secrets from a table.
