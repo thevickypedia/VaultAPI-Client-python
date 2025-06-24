@@ -3,11 +3,11 @@ from typing import Dict, List
 
 import dotenv
 
-from vaultapi.aws import LOGGER
-from vaultapi.config import getenv, resolve_secrets, server_map
-from vaultapi.session import Session
-from vaultapi.transit import TransitShield
-from vaultapi.util import urljoin
+from vaultapi_client.aws import LOGGER
+from vaultapi_client.config import getenv, resolve_secrets, server_map
+from vaultapi_client.session import Session
+from vaultapi_client.transit import TransitShield
+from vaultapi_client.util import urljoin
 
 
 class VaultAPIClient:

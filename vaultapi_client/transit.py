@@ -8,8 +8,8 @@ from typing import Any, ByteString, Dict
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from vaultapi.config import EnvConfig
-from vaultapi.exceptions import InvalidCipherText
+from vaultapi_client.config import EnvConfig
+from vaultapi_client.exceptions import InvalidCipherText
 
 
 class TransitShield:

@@ -17,11 +17,11 @@ requires-python = ">=3.10"
 
 [tool.setuptools]
 packages = [
-    "vaultapi"
+    "vaultapi_client"
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = "vaultapi.version"}
+version = {attr = "vaultapi_client.version"}
 
 [project.optional-dependencies]
 dev = ["pre-commit"]
@@ -29,7 +29,7 @@ aws = ["boto3==1.36.*"]
 
 [project.scripts]
 # sends all the args to commandline function, where the arbitary commands as processed accordingly
-vaultapi = "vaultapi:commandline"
+vaultapi-client = "vaultapi_client:commandline"
 
 [build-system]
 requires      = ["setuptools", "wheel"]

@@ -29,12 +29,12 @@ python -m pip install vaultapi
 ```
 
 **Initiate - IDE**
-```python
-import vaultapi
 
+```python
+import vaultapi_client
 
 if __name__ == '__main__':
-    vaultapi_client = vaultapi.VaultAPIClient()
+    vaultapi_client = vaultapi_client.VaultAPIClient()
     vaultapi_client.get_secret(key="mykey", table_name="mytable")
 ```
 

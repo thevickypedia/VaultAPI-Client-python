@@ -2,7 +2,7 @@ from typing import Any, NoReturn
 
 import requests
 
-from vaultapi.exceptions import VaultAPIServerError
+from vaultapi_client.exceptions import VaultAPIServerError
 
 
 def _request_error(error: requests.RequestException) -> NoReturn:

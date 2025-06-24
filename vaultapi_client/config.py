@@ -5,9 +5,9 @@ import dotenv
 import requests
 from cryptography.fernet import Fernet
 
-from vaultapi.aws import AWSClient
-from vaultapi.exceptions import VaultAPIClientError, VaultAPIServerError
-from vaultapi.util import urljoin
+from vaultapi_client.aws import AWSClient
+from vaultapi_client.exceptions import VaultAPIClientError, VaultAPIServerError
+from vaultapi_client.util import urljoin
 
 env_file = os.environ.get("ENV_FILE") or os.environ.get("env_file") or ".env"
 dotenv.load_dotenv(env_file)
@@ -58,7 +58,7 @@ class EnvConfig:
             response.raise_for_status()
         except requests.RequestException as error:
             raise VaultAPIServerError(
-                message=error.response or error.__context__,
+                message=error.response.text or error.__context__,
                 status_code=getattr(error.response, "status_code", None),
             )
         try:

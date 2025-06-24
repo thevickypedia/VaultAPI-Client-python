@@ -1,5 +1,5 @@
 def urljoin(*args) -> str:
-    """Joins given arguments into an url. Trailing but not leading slashes are stripped for each argument.
+    """Joins given arguments into a url. Trailing but not leading slashes are stripped for each argument.
 
     Returns:
         str:
