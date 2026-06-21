@@ -20,27 +20,23 @@ def commandline():
         "Requires 'pip install VaultAPI-Client[aws]'",
     )
     parser.add_argument(
-        "--get-secret", help="Retrieve a secret from Vault using the secret key"
-    )
-    parser.add_argument(
-        "--get-secrets",
-        help="Retrieve multiple secrets from Vault with a comma separated list of keys",
+        "--get-secret",
+        help="Retrieve a secret from Vault using the secret key, or leave it empty to get the entire table.",
     )
     parser.add_argument(
         "--table",
-        help="Table name where the secrets are stored. "
-        "Can be used with --get-secret/--get-secrets or itself to retrieve all the secrets in a table",
+        help="Table name where the secrets are stored. Required to retrieve a secret from the Vault API.",
     )
-    args = parser.parse_args()
-    if args.version:
+    kwargs = dict(parser.parse_args()._get_kwargs())
+    if kwargs["version"]:
         print(f"VaultAPI Client: {version}")
         exit(0)
+    assert kwargs["table"] is not None, "table name must be provided"
     try:
-        vaultapi_client = VaultAPIClient(args.aws)
+        vaultapi_client = VaultAPIClient(kwargs["aws"])
     except VaultAPIClientError as error:
         LOGGER.exception(error)
         exit(1)
-    kwargs = dict(args._get_kwargs())
     kwargs.pop("version", None)
     kwargs.pop("aws", None)
     LOGGER.debug(kwargs)

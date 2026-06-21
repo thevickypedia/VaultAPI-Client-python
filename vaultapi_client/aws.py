@@ -31,7 +31,7 @@ class AWSClient:
         self.secret_client = session.client(service_name="secretsmanager")
         self.ssm_client = session.client(service_name="ssm")
 
-    def get_aws_secrets(self, name: str = None) -> str | List[str] | None:
+    def get_aws_secrets(self, name: str | None = None) -> str | List[str] | None:
         """Get secrets from AWS secretsmanager.
 
         Args:
@@ -53,7 +53,7 @@ class AWSClient:
         page_results = paginator.paginate().build_full_result()
         return [page["Name"] for page in page_results["SecretList"]]
 
-    def get_aws_params(self, name: str = None) -> str | List[str] | None:
+    def get_aws_params(self, name: str | None = None) -> str | List[str] | None:
         """Get SSM parameters from AWS.
 
         Args:

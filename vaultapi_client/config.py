@@ -1,9 +1,11 @@
 import os
+from enum import Enum
 from typing import NoReturn
 
 import dotenv
 import requests
 from cryptography.fernet import Fernet
+from packaging import version
 
 from vaultapi_client.aws import AWSClient
 from vaultapi_client.exceptions import VaultAPIClientError, VaultAPIServerError
@@ -11,26 +13,25 @@ from vaultapi_client.util import urljoin
 
 env_file = os.environ.get("ENV_FILE") or os.environ.get("env_file") or ".env"
 dotenv.load_dotenv(env_file)
+MINIMUM_SERVER_VERSION = version.parse("0.6.0a0")
 
 
-class EndpointMapping:
+class EndpointMapping(Enum):
     """Enum like function to get all endpoint names to avoid hard coding.
 
     >>> EndpointMapping
 
     """
 
-    health: str = "/health"
-    get_table: str = "/get-table"
-    get_secret: str = "/get-secret"
-    put_secret: str = "/put-secret"
-    list_tables: str = "/list-tables"
-    create_table: str = "/create-table"
-    delete_table: str = "/delete-table"
-    delete_secret: str = "/delete-secret"
-
-
-server_map = EndpointMapping()
+    health = "/health"
+    version = "/version"
+    get_table = "/get-table"
+    get_secret = "/get-secret"
+    put_secret = "/put-secret"
+    list_tables = "/list-tables"
+    create_table = "/create-table"
+    delete_table = "/delete-table"
+    delete_secret = "/delete-secret"
 
 
 class EnvConfig:
@@ -40,27 +41,56 @@ class EnvConfig:
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        vault_server: str,
+        vault_apikey: str,
+        vault_secret: str,
+        vault_transit_key_length: int,
+        vault_transit_time_bucket: int,
+    ) -> None:
         """Instantiates the env config."""
-        self.vault_server: str = kwargs.get("vault_server")
-        self.vault_apikey: str = kwargs.get("vault_apikey")
-        self.vault_secret: str = kwargs.get("vault_secret")
-        self.transit_time_bucket: int = int(kwargs.get("vault_transit_time_bucket"))
-        self.transit_key_length: int = int(kwargs.get("vault_transit_key_length"))
+        self.vault_server: str = vault_server
+        self.vault_apikey: str = vault_apikey
+        self.vault_secret: str = vault_secret
+        self.transit_key_length: int = int(vault_transit_key_length)
+        self.transit_time_bucket: int = int(vault_transit_time_bucket)
         self.__assert__()
 
-    def __assert__(self) -> None | NoReturn:
-        """Run assertions for server config."""
+    def server_check(self, endpoint: EndpointMapping) -> None | NoReturn:
+        """Checks if the server is reachable and matches the required version.
+
+        Args:
+            endpoint: Endpoint to check.
+        """
         try:
             response = requests.get(
-                url=urljoin(self.vault_server, server_map.health), timeout=(1, 1)
+                url=urljoin(self.vault_server, endpoint), timeout=(1, 1)
             )
             response.raise_for_status()
         except requests.RequestException as error:
+            context = (
+                error.response.text
+                if (error.response and error.response.text)
+                else str(error.__context__)
+            )
             raise VaultAPIServerError(
-                message=error.response.text or error.__context__,
+                message=context,
                 status_code=getattr(error.response, "status_code", None),
             )
+        if endpoint == EndpointMapping.version:
+            # Make sure server_version is more than MINIMUM_SERVER_VERSION
+            server_version = version.parse(response.json())
+            if server_version < MINIMUM_SERVER_VERSION:
+                raise VaultAPIServerError(
+                    f"Server version [{server_version}] is below the minimum required version "
+                    f"[{MINIMUM_SERVER_VERSION}]. Please upgrade the server [OR] use the client version <=0.2.0."
+                )
+
+    def __assert__(self) -> None | NoReturn:
+        """Run assertions for server config."""
+        self.server_check(EndpointMapping.health)
+        self.server_check(EndpointMapping.version)
         try:
             assert self.transit_key_length in (16, 24, 32)
         except AssertionError:

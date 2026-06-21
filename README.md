@@ -56,6 +56,8 @@ vaultapi --table mytable
 - **APIKEY** - API Key for authentication.
 - **SECRET** - Secret key used for transit encryption.
 - **VAULT_SERVER** - VaultAPI server URL.
+- **TRANSIT_KEY_LENGTH** - AES key length used for transit encryption. Defaults to `32`
+- **TRANSIT_TIME_BUCKET** - Interval for which the transit epoch will remain constant. Defaults to `60`
 
 ## Coding Standards
 Docstring format: [`Google`][google-docs] <br>

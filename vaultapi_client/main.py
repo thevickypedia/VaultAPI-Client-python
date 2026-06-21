@@ -4,10 +4,9 @@ from typing import Dict, List
 import dotenv
 
 from vaultapi_client.aws import LOGGER
-from vaultapi_client.config import getenv, resolve_secrets, server_map
+from vaultapi_client.config import EndpointMapping, getenv, resolve_secrets
 from vaultapi_client.session import Session
 from vaultapi_client.transit import TransitShield
-from vaultapi_client.util import urljoin
 
 
 class VaultAPIClient:
@@ -21,17 +20,15 @@ class VaultAPIClient:
         """Instantiates the VaultAPIClient object."""
         self.env_config = resolve_secrets(aws)
         self.transit_shield = TransitShield(self.env_config)
-        self.SESSION = Session()
-        self.SESSION.headers = {
-            "accept": "application/json",
-            "Authorization": f"Bearer {self.env_config.vault_apikey}",
-        }
+        self.SESSION = Session(self.env_config)
 
-    def _get_cipher(self, server_url: str, query_params: Dict[str, str]) -> str:
+    def _get_cipher(
+        self, endpoint: EndpointMapping, query_params: Dict[str, str]
+    ) -> str:
         """Get ciphertext from the server.
 
         Args:
-            server_url: Server URL to make the request to.
+            endpoint: API endpoint to request.
             query_params: Query parameters to send with the request.
 
         Returns:
@@ -39,7 +36,7 @@ class VaultAPIClient:
             Returns the ciphertext.
         """
         return self.SESSION.get(
-            server_url,
+            endpoint,
             params=query_params,
         )
 
@@ -54,8 +51,30 @@ class VaultAPIClient:
             assert os.path.isfile(dotenv_file)
         except AssertionError:
             raise FileNotFoundError(dotenv_file)
-        env_vars = dotenv.dotenv_values(dotenv_file)
+        env_vars = {
+            k: v for k, v in dotenv.dotenv_values(dotenv_file).items() if v is not None
+        }
         return self.update_secret(secrets=env_vars, table_name=table_name)
+
+    def table_to_env(self, table_name: str, dotenv_file: str | None = None) -> None:
+        """Retrieve all secrets from the database and store them as env vars.
+
+        Args:
+            table_name: Vault table name,
+            dotenv_file: Dot env filename to store secrets in addition to env vars.
+        """
+        if dotenv_file:
+            try:
+                assert os.path.isfile(dotenv_file)
+            except AssertionError:
+                raise FileNotFoundError(dotenv_file)
+        secrets = self.get_table(table_name)
+        for key, value in secrets.items():
+            os.environ[key] = value
+            if dotenv_file:
+                dotenv.set_key(
+                    dotenv_path=dotenv_file, key_to_set=key, value_to_set=value
+                )
 
     def update_secret(self, secrets: Dict[str, str], table_name: str) -> Dict[str, str]:
         """Update or create secrets in the vault.
@@ -68,9 +87,8 @@ class VaultAPIClient:
             Dict[str, str]:
             Returns the server response.
         """
-        url = urljoin(self.env_config.vault_server, server_map.put_secret)
         return self.SESSION.put(
-            url,
+            EndpointMapping.put_secret,
             json={
                 "secrets": self.transit_shield.encrypt(payload=secrets),
                 "table_name": table_name,
@@ -88,9 +106,8 @@ class VaultAPIClient:
             Dict[str, str]:
             Returns the server response.
         """
-        url = urljoin(self.env_config.vault_server, server_map.delete_secret)
         return self.SESSION.delete(
-            url,
+            EndpointMapping.delete_secret,
             json={
                 "key": key,
                 "table_name": table_name,
@@ -104,8 +121,7 @@ class VaultAPIClient:
             List[str]:
             Returns the available table names as a list of strings.
         """
-        url = urljoin(self.env_config.vault_server, server_map.list_tables)
-        return self.SESSION.get(url)
+        return self.SESSION.get(EndpointMapping.list_tables)
 
     def create_table(self, table_name: str) -> Dict[str, str]:
         """Creates a new table in the vault.
@@ -117,8 +133,9 @@ class VaultAPIClient:
             Dict[str, str]:
             Returns the server response.
         """
-        url = urljoin(self.env_config.vault_server, server_map.create_table)
-        return self.SESSION.post(url, params={"table_name": table_name})
+        return self.SESSION.post(
+            EndpointMapping.create_table, params={"table_name": table_name}
+        )
 
     def delete_table(self, table_name: str) -> Dict[str, str]:
         """Deletes an existing table.
@@ -130,8 +147,9 @@ class VaultAPIClient:
             Dict[str, str]:
             Returns the server response.
         """
-        url = urljoin(self.env_config.vault_server, server_map.delete_table)
-        return self.SESSION.delete(url, params={"table_name": table_name})
+        return self.SESSION.delete(
+            EndpointMapping.delete_table, params={"table_name": table_name}
+        )
 
     def get_secret(self, key: str, table_name: str) -> Dict[str, str]:
         """Retrieves multiple secrets from a table.
@@ -144,9 +162,10 @@ class VaultAPIClient:
             Dict[str, str]:
             Returns a dictionary of decrypted values.
         """
-        url = urljoin(self.env_config.vault_server, server_map.get_secret)
-        cipher_text = self._get_cipher(url, {"key": key, "table_name": table_name})
-        return self.transit_shield.decrypt(cipher_text)
+        cipher_text = self._get_cipher(
+            EndpointMapping.get_secret, {"key": key, "table_name": table_name}
+        )
+        return self.transit_shield.decrypt(ciphertext=cipher_text)
 
     def get_table(self, table_name: str) -> Dict[str, str]:
         """Retrieves all the secrets stored in a table.
@@ -158,14 +177,15 @@ class VaultAPIClient:
             Dict[str, str]:
             Returns a dictionary of decrypted values.
         """
-        url = urljoin(self.env_config.vault_server, server_map.get_table)
-        cipher_text = self._get_cipher(url, {"table_name": table_name})
-        return self.transit_shield.decrypt(cipher_text)
+        cipher_text = self._get_cipher(
+            EndpointMapping.get_table, {"table_name": table_name}
+        )
+        return self.transit_shield.decrypt(ciphertext=cipher_text)
 
     def decrypt(
         self,
         table: str,
-        get_secret: str = None,
+        get_secret: str | None = None,
     ) -> Dict[str, str] | str:
         """Decrypt function.
 
@@ -182,8 +202,10 @@ class VaultAPIClient:
             return {}
         params = dict(table_name=table)
         if get_secret:
-            url = urljoin(self.env_config.vault_server, server_map.get_secret)
+            endpoint = EndpointMapping.get_secret
             params["key"] = get_secret
         else:
-            url = urljoin(self.env_config.vault_server, server_map.get_table)
-        return self.transit_shield.decrypt(self._get_cipher(url, params))
+            endpoint = EndpointMapping.get_table
+        return self.transit_shield.decrypt(
+            self._get_cipher(endpoint=EndpointMapping(endpoint), query_params=params)
+        )
