@@ -1,8 +1,6 @@
-import logging
 import os
+import warnings
 from typing import List
-
-LOGGER = logging.getLogger(__name__)
 
 
 class AWSClient:
@@ -42,11 +40,10 @@ class AWSClient:
             Returns the value of the secret or list of all secrets' names.
         """
         if name:
-            LOGGER.info("Retrieving the secret '%s' from AWS secrets manager", name)
             try:
                 response = self.secret_client.get_secret_value(SecretId=name)
             except Exception as error:
-                LOGGER.exception(error)
+                warnings.warn(error.__str__(), category=UserWarning, stacklevel=3)
                 return None
             return response["SecretString"]
         paginator = self.secret_client.get_paginator("list_secrets")
@@ -64,11 +61,10 @@ class AWSClient:
             Returns the value of the parameter or list of all parameter names.
         """
         if name:
-            LOGGER.info("Retrieving the parameter '%s' from AWS parameter store", name)
             try:
                 response = self.ssm_client.get_parameter(Name=name, WithDecryption=True)
             except Exception as error:
-                LOGGER.exception(error)
+                warnings.warn(error.__str__(), category=UserWarning, stacklevel=3)
                 return None
             return response["Parameter"]["Value"]
         paginator = self.ssm_client.get_paginator("describe_parameters")

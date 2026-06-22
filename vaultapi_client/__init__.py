@@ -1,8 +1,8 @@
 import argparse
 import json
 
-from .exceptions import VaultAPIClientError
-from .main import LOGGER, VaultAPIClient
+from .exceptions import VaultAPIClientError  # noqa: F401
+from .main import VaultAPIClient
 
 version = "0.2.0"
 
@@ -32,12 +32,7 @@ def commandline():
         print(f"VaultAPI Client: {version}")
         exit(0)
     assert kwargs["table"] is not None, "table name must be provided"
-    try:
-        vaultapi_client = VaultAPIClient(kwargs["aws"])
-    except VaultAPIClientError as error:
-        LOGGER.exception(error)
-        exit(1)
+    vaultapi_client = VaultAPIClient(aws=kwargs["aws"])
     kwargs.pop("version", None)
     kwargs.pop("aws", None)
-    LOGGER.debug(kwargs)
     print(json.dumps(vaultapi_client.decrypt(**kwargs), indent=2))

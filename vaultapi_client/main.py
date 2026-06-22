@@ -3,7 +3,6 @@ from typing import Dict, List
 
 import dotenv
 
-from vaultapi_client.aws import LOGGER
 from vaultapi_client.config import EndpointMapping, getenv, resolve_secrets
 from vaultapi_client.session import Session
 from vaultapi_client.transit import TransitShield
@@ -198,8 +197,7 @@ class VaultAPIClient:
             Returns a dictionary of decrypted values.
         """
         if not table:
-            LOGGER.warning("No table_name was given")
-            return {}
+            raise ValueError("Table name is required to decrypt.")
         params = dict(table_name=table)
         if get_secret:
             endpoint = EndpointMapping.get_secret
