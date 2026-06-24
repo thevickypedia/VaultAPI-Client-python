@@ -140,6 +140,15 @@ class Session:
         """Make POST request to the server and process the response."""
         return self.request("POST", endpoint, params=params, json=json)
 
+    def patch(
+        self,
+        endpoint: EndpointMapping,
+        params: Dict[str, Any] | None = None,
+        json: Dict[str, Any] | None = None,
+    ) -> Any:
+        """Make PATCH request to the server and process the response."""
+        return self.request("PATCH", endpoint, params=params, json=json)
+
     def delete(
         self,
         endpoint: EndpointMapping,

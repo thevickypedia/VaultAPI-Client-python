@@ -13,7 +13,7 @@ from vaultapi_client.util import urljoin
 
 env_file = os.environ.get("ENV_FILE") or os.environ.get("env_file") or ".env"
 dotenv.load_dotenv(env_file)
-MINIMUM_SERVER_VERSION = version.parse("0.6.0a0")
+MINIMUM_SERVER_VERSION = version.parse("0.6.0")
 
 
 class EndpointMapping(Enum):
@@ -30,6 +30,7 @@ class EndpointMapping(Enum):
     put_secret = "/put-secret"
     list_tables = "/list-tables"
     create_table = "/create-table"
+    rename_table = "/rename-table"
     delete_table = "/delete-table"
     delete_secret = "/delete-secret"
 

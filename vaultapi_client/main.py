@@ -123,7 +123,7 @@ class VaultAPIClient:
         return self.SESSION.get(EndpointMapping.list_tables)
 
     def create_table(self, table_name: str) -> Dict[str, str]:
-        """Creates a new table in the vault.
+        """Creates a new table in the vault database.
 
         Args:
             table_name: Table name.
@@ -134,6 +134,23 @@ class VaultAPIClient:
         """
         return self.SESSION.post(
             EndpointMapping.create_table, params={"table_name": table_name}
+        )
+
+    def rename_table(self, table_name: str, new_name: str) -> str:
+        """Renames a table in the vault database.
+
+        Args:
+            table_name: Table name to rename.
+            new_name: New table name.
+
+        Returns:
+            str:
+            Returns the server response.
+        """
+        return self.SESSION.patch(
+            EndpointMapping.rename_table,
+            params={"table_name": table_name},
+            json=dict(new_name=new_name),
         )
 
     def delete_table(self, table_name: str) -> Dict[str, str]:
