@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, NoReturn
 
 import requests
 
-from vaultapi_client.config import EndpointMapping, EnvConfig
+from vaultapi_client.config import EndpointMapping, EnvConfig, create_session
 from vaultapi_client.exceptions import VaultAPIServerError
 from vaultapi_client.util import urljoin
 
@@ -79,6 +79,7 @@ class Session:
             "Accept": "application/json",
             "Authorization": f"Bearer {generate_bearer_token(token)}",
         }
+        self.session = create_session()
 
     def request(
         self,
@@ -105,7 +106,7 @@ class Session:
         else:
             headers = self.headers(token=f"{self.apikey}.{self.secret}")
         try:
-            response = requests.request(
+            response = self.session.request(
                 method=method, url=url, headers=headers, params=params, json=json
             )
             response.raise_for_status()

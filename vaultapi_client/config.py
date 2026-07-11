@@ -6,6 +6,8 @@ import dotenv
 import requests
 from cryptography.fernet import Fernet
 from packaging import version
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 from vaultapi_client.aws import AWSClient
 from vaultapi_client.exceptions import VaultAPIClientError, VaultAPIServerError
@@ -14,6 +16,25 @@ from vaultapi_client.util import urljoin
 env_file = os.environ.get("ENV_FILE") or os.environ.get("env_file") or ".env"
 dotenv.load_dotenv(env_file)
 MINIMUM_SERVER_VERSION = version.parse("0.6.0")
+
+
+def create_session():
+    """Return a ``requests.Session`` object with retry adapters mounted."""
+    # Define retry adapter
+    retry_strategy = Retry(
+        total=5,  # Total number of retries
+        backoff_factor=1,  # Delay between retries
+        status_forcelist=[429, 502, 503, 504],  # HTTP codes to retry
+        allowed_methods=["GET", "POST", "PUT", "DELETE"],  # HTTP methods to retry
+    )
+
+    # Create adapter and session
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session = requests.Session()
+    # noinspection HttpUrlsUsage
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 
 class EndpointMapping(Enum):
@@ -56,6 +77,7 @@ class EnvConfig:
         self.vault_secret: str = vault_secret
         self.transit_key_length: int = int(vault_transit_key_length)
         self.transit_time_bucket: int = int(vault_transit_time_bucket)
+        self.session = create_session()
         self.__assert__()
 
     def server_check(self, endpoint: EndpointMapping) -> None | NoReturn:
@@ -65,8 +87,9 @@ class EnvConfig:
             endpoint: Endpoint to check.
         """
         try:
-            response = requests.get(
-                url=urljoin(self.vault_server, endpoint), timeout=(1, 1)
+            # (connect_timeout: 2, read_timeout: 1)
+            response = self.session.get(
+                url=urljoin(self.vault_server, endpoint), timeout=(2, 1)
             )
             response.raise_for_status()
         except requests.RequestException as error:
