@@ -4,7 +4,7 @@ import json
 from .exceptions import VaultAPIClientError  # noqa: F401
 from .main import VaultAPIClient
 
-version = "0.3.1"
+version = "0.3.2"
 
 
 def commandline():
