@@ -15,9 +15,24 @@ class VaultAPIClient:
 
     """
 
-    def __init__(self, aws: bool = getenv("vault_aws", default="0") in ("1", "true")):
+    def __init__(
+        self,
+        aws: bool = getenv("vault_aws", default="0") in ("1", "true"),
+        vault_server: str | None = None,
+        vault_apikey: str | None = None,
+        vault_secret: str | None = None,
+        vault_transit_time_bucket: int | None = None,
+        vault_transit_key_length: int | None = None,
+    ):
         """Instantiates the VaultAPIClient object."""
-        self.env_config = resolve_secrets(aws)
+        self.env_config = resolve_secrets(
+            aws=aws,
+            vault_server=vault_server,
+            vault_apikey=vault_apikey,
+            vault_secret=vault_secret,
+            vault_transit_time_bucket=vault_transit_time_bucket,
+            vault_transit_key_length=vault_transit_key_length,
+        )
         self.transit_shield = TransitShield(self.env_config)
         self.SESSION = Session(self.env_config)
 

@@ -137,31 +137,40 @@ class EnvConfig:
         Fernet(self.vault_secret)
 
 
-def getenv(*args, default: str = None) -> str:
+def getenv(*args, default: str | None = None) -> str | None:
     """Returns the key-ed environment variable or the default value."""
     for key in args:
-        if value := os.environ.get(key.upper()) or os.environ.get(key.lower()):
+        if value := os.getenv(key.lower()) or os.getenv(key.upper()):
             return value
     return default
 
 
-def resolve_secrets(try_aws: bool) -> EnvConfig | NoReturn:
+def resolve_secrets(
+    aws: bool,
+    vault_server: str | None = None,
+    vault_apikey: str | None = None,
+    vault_secret: str | None = None,
+    vault_transit_time_bucket: int | None = None,
+    vault_transit_key_length: int | None = None,
+) -> EnvConfig | NoReturn:
     """Tries to retrieve the required secret from environment variable or AWS parameter or the AWS secrets manager."""
     base_env_vars = dict(
-        vault_server=getenv("vault_server", "server"),
-        vault_apikey=getenv("vault_apikey", "apikey"),
-        vault_secret=getenv("vault_secret", "secret"),
-        vault_transit_time_bucket=getenv(
-            "vault_transit_time_bucket", "transit_time_bucket", default="60"
+        vault_server=vault_server or getenv("vault_server", "server"),
+        vault_apikey=vault_apikey or getenv("vault_apikey", "apikey"),
+        vault_secret=vault_secret or ("vault_secret", "secret"),
+        vault_transit_time_bucket=(
+            vault_transit_time_bucket
+            or getenv("vault_transit_time_bucket", "transit_time_bucket")
         ),
-        vault_transit_key_length=getenv(
-            "vault_transit_key_length", "transit_time_bucket", default="32"
+        vault_transit_key_length=(
+            vault_transit_key_length
+            or getenv("vault_transit_key_length", "transit_time_bucket")
         ),
     )
     if all(base_env_vars.values()):
         return EnvConfig(**base_env_vars)
     unsatisfied = [k for k, v in base_env_vars.items() if not v]
-    if try_aws:
+    if aws:
         aws_client = AWSClient()
         resolved_env_vars = {
             **base_env_vars,
@@ -170,6 +179,10 @@ def resolve_secrets(try_aws: bool) -> EnvConfig | NoReturn:
                 for k in unsatisfied
             },
         }
+        if not resolved_env_vars.get("vault_transit_time_bucket"):
+            resolved_env_vars["vault_transit_time_bucket"] = 60
+        if not resolved_env_vars.get("vault_transit_key_length"):
+            resolved_env_vars["vault_transit_key_length"] = 32
         if all(resolved_env_vars.values()):
             return EnvConfig(**resolved_env_vars)
         unsatisfied = [k for k, v in resolved_env_vars.items() if not v]
