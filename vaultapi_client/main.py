@@ -23,6 +23,7 @@ class VaultAPIClient:
         vault_secret: str | None = None,
         vault_transit_time_bucket: int | None = None,
         vault_transit_key_length: int | None = None,
+        timeout: int | float | tuple | None = (5, 30),
     ):
         """Instantiates the VaultAPIClient object."""
         self.env_config = resolve_secrets(
@@ -35,15 +36,20 @@ class VaultAPIClient:
         )
         self.transit_shield = TransitShield(self.env_config)
         self.SESSION = Session(self.env_config)
+        self.timeout = timeout
 
     def _get_cipher(
-        self, endpoint: EndpointMapping, query_params: Dict[str, str]
+        self,
+        endpoint: EndpointMapping,
+        query_params: Dict[str, str],
+        timeout: int | float | tuple | None = None,
     ) -> str:
         """Get ciphertext from the server.
 
         Args:
             endpoint: API endpoint to request.
             query_params: Query parameters to send with the request.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             str:
@@ -52,14 +58,21 @@ class VaultAPIClient:
         return self.SESSION.get(
             endpoint,
             params=query_params,
+            timeout=timeout or self.timeout,
         )
 
-    def dotenv_to_table(self, table_name: str, dotenv_file: str) -> Dict[str, str]:
+    def dotenv_to_table(
+        self,
+        table_name: str,
+        dotenv_file: str,
+        timeout: int | float | tuple | None = None,
+    ) -> Dict[str, str]:
         """Store all the env vars from a .env file into the database.
 
         Args:
             table_name: Name of the table to store secrets.
             dotenv_file: Dot env filename.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
         """
         try:
             assert os.path.isfile(dotenv_file)
@@ -68,21 +81,29 @@ class VaultAPIClient:
         env_vars = {
             k: v for k, v in dotenv.dotenv_values(dotenv_file).items() if v is not None
         }
-        return self.update_secret(secrets=env_vars, table_name=table_name)
+        return self.update_secret(
+            secrets=env_vars, table_name=table_name, timeout=timeout or self.timeout
+        )
 
-    def table_to_env(self, table_name: str, dotenv_file: str | None = None) -> None:
+    def table_to_env(
+        self,
+        table_name: str,
+        dotenv_file: str | None = None,
+        timeout: int | float | tuple | None = None,
+    ) -> None:
         """Retrieve all secrets from the database and store them as env vars.
 
         Args:
             table_name: Vault table name,
             dotenv_file: Dot env filename to store secrets in addition to env vars.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
         """
         if dotenv_file:
             try:
                 assert os.path.isfile(dotenv_file)
             except AssertionError:
                 raise FileNotFoundError(dotenv_file)
-        secrets = self.get_table(table_name)
+        secrets = self.get_table(table_name, timeout=timeout or self.timeout)
         for key, value in secrets.items():
             os.environ[key] = value
             if dotenv_file:
@@ -90,12 +111,18 @@ class VaultAPIClient:
                     dotenv_path=dotenv_file, key_to_set=key, value_to_set=value
                 )
 
-    def update_secret(self, secrets: Dict[str, str], table_name: str) -> Dict[str, str]:
+    def update_secret(
+        self,
+        secrets: Dict[str, str],
+        table_name: str,
+        timeout: int | float | tuple | None = None,
+    ) -> Dict[str, str]:
         """Update or create secrets in the vault.
 
         Args:
             secrets: Key value pairs with multiple secrets.
             table_name: Table name.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
@@ -107,14 +134,18 @@ class VaultAPIClient:
                 "secrets": self.transit_shield.encrypt(payload=secrets),
                 "table_name": table_name,
             },
+            timeout=timeout or self.timeout,
         )
 
-    def delete_secret(self, key: str, table_name: str) -> Dict[str, str]:
+    def delete_secret(
+        self, key: str, table_name: str, timeout: int | float | tuple | None = None
+    ) -> Dict[str, str]:
         """Delete a secret from the vault.
 
         Args:
             key: Key for the secret.
             table_name: Table name.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
@@ -126,37 +157,51 @@ class VaultAPIClient:
                 "key": key,
                 "table_name": table_name,
             },
+            timeout=timeout or self.timeout,
         )
 
-    def list_tables(self) -> List[str]:
+    def list_tables(self, timeout: int | float | tuple | None = None) -> List[str]:
         """List all available tables.
+
+        Args:
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             List[str]:
             Returns the available table names as a list of strings.
         """
-        return self.SESSION.get(EndpointMapping.list_tables)
+        return self.SESSION.get(
+            EndpointMapping.list_tables, timeout=timeout or self.timeout
+        )
 
-    def create_table(self, table_name: str) -> Dict[str, str]:
+    def create_table(
+        self, table_name: str, timeout: int | float | tuple | None = None
+    ) -> Dict[str, str]:
         """Creates a new table in the vault database.
 
         Args:
             table_name: Table name.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
             Returns the server response.
         """
         return self.SESSION.post(
-            EndpointMapping.create_table, params={"table_name": table_name}
+            EndpointMapping.create_table,
+            params={"table_name": table_name},
+            timeout=timeout or self.timeout,
         )
 
-    def rename_table(self, table_name: str, new_name: str) -> str:
+    def rename_table(
+        self, table_name: str, new_name: str, timeout: int | float | tuple | None = None
+    ) -> str:
         """Renames a table in the vault database.
 
         Args:
             table_name: Table name to rename.
             new_name: New table name.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             str:
@@ -166,50 +211,66 @@ class VaultAPIClient:
             EndpointMapping.rename_table,
             params={"table_name": table_name},
             json=dict(new_name=new_name),
+            timeout=timeout or self.timeout,
         )
 
-    def delete_table(self, table_name: str) -> Dict[str, str]:
+    def delete_table(
+        self, table_name: str, timeout: int | float | tuple | None = None
+    ) -> Dict[str, str]:
         """Deletes an existing table.
 
         Args:
             table_name: Table name.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
             Returns the server response.
         """
         return self.SESSION.delete(
-            EndpointMapping.delete_table, params={"table_name": table_name}
+            EndpointMapping.delete_table,
+            params={"table_name": table_name},
+            timeout=timeout or self.timeout,
         )
 
-    def get_secret(self, key: str, table_name: str) -> Dict[str, str]:
+    def get_secret(
+        self, key: str, table_name: str, timeout: int | float | tuple | None = None
+    ) -> Dict[str, str]:
         """Retrieves multiple secrets from a table.
 
         Args:
             key: Comma separated list of secret names to be retrieved.
             table_name: Table name.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
             Returns a dictionary of decrypted values.
         """
         cipher_text = self._get_cipher(
-            EndpointMapping.get_secret, {"key": key, "table_name": table_name}
+            EndpointMapping.get_secret,
+            query_params={"key": key, "table_name": table_name},
+            timeout=timeout or self.timeout,
         )
         return self.transit_shield.decrypt(ciphertext=cipher_text)
 
-    def get_table(self, table_name: str) -> Dict[str, str]:
+    def get_table(
+        self, table_name: str, timeout: int | float | tuple | None = None
+    ) -> Dict[str, str]:
         """Retrieves all the secrets stored in a table.
 
         Args:
             table_name: Table name.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
             Returns a dictionary of decrypted values.
         """
         cipher_text = self._get_cipher(
-            EndpointMapping.get_table, {"table_name": table_name}
+            EndpointMapping.get_table,
+            query_params={"table_name": table_name},
+            timeout=timeout or self.timeout,
         )
         return self.transit_shield.decrypt(ciphertext=cipher_text)
 
@@ -217,12 +278,14 @@ class VaultAPIClient:
         self,
         table: str,
         get_secret: str | None = None,
+        timeout: int | float | tuple | None = None,
     ) -> Dict[str, str] | str:
         """Decrypt function.
 
         Args:
             table: Table name to retrieve.
             get_secret: Comma separated list of secret keys to retrieve.
+            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
@@ -237,5 +300,9 @@ class VaultAPIClient:
         else:
             endpoint = EndpointMapping.get_table
         return self.transit_shield.decrypt(
-            self._get_cipher(endpoint=EndpointMapping(endpoint), query_params=params)
+            self._get_cipher(
+                endpoint=EndpointMapping(endpoint),
+                query_params=params,
+                timeout=timeout or self.timeout,
+            )
         )

@@ -87,6 +87,7 @@ class Session:
         endpoint: EndpointMapping,
         params: Dict[str, Any] | None = None,
         json: Dict[str, Any] | None = None,
+        timeout: int | float | tuple | None = None,
     ) -> Any:
         """Intercepts all HTTP requests and applies centralized error handling.
 
@@ -95,6 +96,7 @@ class Session:
             endpoint: Endpoint to make a request.
             params: Query parameters to pass to the request.
             json: JSON data to pass to the request.
+            timeout: Timeout in seconds.
 
         Returns:
             Any:
@@ -107,7 +109,12 @@ class Session:
             headers = self.headers(token=f"{self.apikey}.{self.secret}")
         try:
             response = self.session.request(
-                method=method, url=url, headers=headers, params=params, json=json
+                method=method,
+                url=url,
+                headers=headers,
+                params=params,
+                json=json,
+                timeout=timeout,
             )
             response.raise_for_status()
             return process_response(response)
@@ -119,42 +126,51 @@ class Session:
         endpoint: EndpointMapping,
         params: Dict[str, Any] | None = None,
         json: Dict[str, Any] | None = None,
+        timeout: int | float | tuple | None = None,
     ) -> Any:
         """Make GET request to the server and process the response."""
-        return self.request("GET", endpoint, params=params, json=json)
+        return self.request("GET", endpoint, params=params, json=json, timeout=timeout)
 
     def put(
         self,
         endpoint: EndpointMapping,
         params: Dict[str, Any] | None = None,
         json: Dict[str, Any] | None = None,
+        timeout: int | float | tuple | None = None,
     ) -> Any:
         """Make PUT request to the server and process the response."""
-        return self.request("PUT", endpoint, params=params, json=json)
+        return self.request("PUT", endpoint, params=params, json=json, timeout=timeout)
 
     def post(
         self,
         endpoint: EndpointMapping,
         params: Dict[str, Any] | None = None,
         json: Dict[str, Any] | None = None,
+        timeout: int | float | tuple | None = None,
     ) -> Any:
         """Make POST request to the server and process the response."""
-        return self.request("POST", endpoint, params=params, json=json)
+        return self.request("POST", endpoint, params=params, json=json, timeout=timeout)
 
     def patch(
         self,
         endpoint: EndpointMapping,
         params: Dict[str, Any] | None = None,
         json: Dict[str, Any] | None = None,
+        timeout: int | float | tuple | None = None,
     ) -> Any:
         """Make PATCH request to the server and process the response."""
-        return self.request("PATCH", endpoint, params=params, json=json)
+        return self.request(
+            "PATCH", endpoint, params=params, json=json, timeout=timeout
+        )
 
     def delete(
         self,
         endpoint: EndpointMapping,
         params: Dict[str, Any] | None = None,
         json: Dict[str, Any] | None = None,
+        timeout: int | float | tuple | None = None,
     ) -> Any:
         """Make DELETE request to the server and process the response."""
-        return self.request("DELETE", endpoint, params=params, json=json)
+        return self.request(
+            "DELETE", endpoint, params=params, json=json, timeout=timeout
+        )
