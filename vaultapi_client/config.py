@@ -157,7 +157,7 @@ def resolve_secrets(
     base_env_vars = dict(
         vault_server=vault_server or getenv("vault_server", "server"),
         vault_apikey=vault_apikey or getenv("vault_apikey", "apikey"),
-        vault_secret=vault_secret or ("vault_secret", "secret"),
+        vault_secret=vault_secret or getenv("vault_secret", "secret"),
         vault_transit_time_bucket=(
             vault_transit_time_bucket
             or getenv("vault_transit_time_bucket", "transit_time_bucket")
