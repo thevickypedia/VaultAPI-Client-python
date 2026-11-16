@@ -2,6 +2,7 @@ import os
 from typing import Dict, List
 
 import dotenv
+from cryptography.fernet import Fernet
 
 from vaultapi_client.config import EndpointMapping, getenv, resolve_secrets
 from vaultapi_client.session import Session
@@ -36,6 +37,7 @@ class VaultAPIClient:
         )
         self.transit_shield = TransitShield(self.env_config)
         self.SESSION = Session(self.env_config)
+        self.fernet = Fernet(self.env_config.vault_secret)
         self.timeout = timeout
 
     def _get_cipher(
@@ -136,6 +138,32 @@ class VaultAPIClient:
             },
             timeout=timeout or self.timeout,
         )
+
+    def encryptor(self, value: str) -> str:
+        """Encrypt a value.
+
+        Args:
+            value: Value to encrypt.
+
+        Returns:
+            str:
+            Returns the encrypted string.
+        """
+        return self.fernet.encrypt(data=value.encode(encoding="utf-8")).decode(
+            encoding="utf-8"
+        )
+
+    def decryptor(self, token: str) -> str:
+        """Decrypt a token.
+
+        Args:
+            token: Token to decrypt
+
+        Returns:
+            str:
+            Returns the decrypted payload.
+        """
+        return self.fernet.decrypt(token=token).decode(encoding="utf-8")
 
     def delete_secret(
         self, key: str, table_name: str, timeout: int | float | tuple | None = None

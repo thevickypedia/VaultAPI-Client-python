@@ -12,10 +12,12 @@ from vaultapi_client.util import urljoin
 
 def _request_error(error: requests.RequestException) -> NoReturn:
     """Uses requests module base exception to raise a custom server error."""
-    raise VaultAPIServerError(
-        f"Request failed: {error}",
-        status_code=getattr(error.response, "status_code", None),
-    )
+    status_code = 0
+    response = "Unknown reason"
+    if error.response:
+        status_code = error.response.status_code
+        response = error.response.json() or error.response.text
+    raise VaultAPIServerError(f"Request failed: {response}", status_code=status_code)
 
 
 def generate_bearer_token(token: str) -> str:
