@@ -306,14 +306,12 @@ class VaultAPIClient:
         self,
         table: str,
         get_secret: str | None = None,
-        timeout: int | float | tuple | None = None,
     ) -> Dict[str, str] | str:
         """Decrypt function.
 
         Args:
             table: Table name to retrieve.
             get_secret: Comma separated list of secret keys to retrieve.
-            timeout: Timeout for the request in seconds. Can be a float or a tuple (connect_timeout, read_timeout).
 
         Returns:
             Dict[str, str]:
@@ -331,6 +329,6 @@ class VaultAPIClient:
             self._get_cipher(
                 endpoint=EndpointMapping(endpoint),
                 query_params=params,
-                timeout=timeout or self.timeout,
+                timeout=self.timeout,
             )
         )
