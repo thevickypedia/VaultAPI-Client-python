@@ -5,3 +5,5 @@ build/
 __pycache__/
 dist
 VaultAPI_Client.egg-info
+.vault*.env
+vault_backup/

@@ -1,5 +1,6 @@
 import argparse
 import json
+import time
 
 from .exceptions import VaultAPIClientError  # noqa: F401
 from .main import VaultAPIClient
@@ -27,12 +28,28 @@ def commandline():
         "--table",
         help="Table name where the secrets are stored. Required to retrieve a secret from the Vault API.",
     )
+    parser.add_argument(
+        "--env",
+        help="Writes to a .env file. Set to false to print the output in stdout.",
+        type=bool,
+        default=False,
+    )
     kwargs = dict(parser.parse_args()._get_kwargs())
     if kwargs["version"]:
         print(f"VaultAPI Client: {version}")
         exit(0)
-    assert kwargs["table"] is not None, "table name must be provided"
-    vaultapi_client = VaultAPIClient(aws=kwargs["aws"])
+    if not kwargs["table"]:
+        raise ValueError("table name must be provided")
     kwargs.pop("version", None)
-    kwargs.pop("aws", None)
-    print(json.dumps(vaultapi_client.decrypt(**kwargs), indent=2))
+    env_writer = kwargs.pop("env", False)
+    data = VaultAPIClient(aws=kwargs.pop("aws", None)).decrypt(**kwargs)
+    if env_writer:
+        filename = f".vault_{int(time.time())}.env"
+        with open(filename, "w") as file:
+            for key, value in data.items():
+                escaped_value = value.replace("'", "'\\''")
+                file.write(f"export {key}='{escaped_value}'\n")
+            file.flush()
+        print(filename)
+    else:
+        print(json.dumps(data, indent=2))

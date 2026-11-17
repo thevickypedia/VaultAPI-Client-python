@@ -306,7 +306,7 @@ class VaultAPIClient:
         self,
         table: str,
         get_secret: str | None = None,
-    ) -> Dict[str, str] | str:
+    ) -> Dict[str, str]:
         """Decrypt function.
 
         Args:
