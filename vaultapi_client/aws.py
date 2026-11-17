@@ -1,7 +1,6 @@
-import json
 import os
 import warnings
-from typing import Any, List
+from typing import List
 
 
 class AWSClient:
@@ -63,42 +62,3 @@ class AWSClient:
             warnings.warn(error.__str__(), category=UserWarning, stacklevel=3)
             return None
         return response["Parameter"]["Value"]
-
-    def put_aws_secrets(self, name: str, value: Any) -> None:
-        """Add secret to AWS secrets manager.
-
-        Args:
-            name: Name of the secret.
-            value: Value of the secret.
-        """
-        try:
-            response = self.secret_client.put_secret_value(
-                SecretId=name,
-                SecretString=value if isinstance(value, str) else json.dumps(value),
-            )
-        except Exception as error:
-            warnings.warn(error.__str__(), category=UserWarning, stacklevel=3)
-            return
-        if response.get("ResponseMetadata", {}).get("HTTPStatusCode", 400) != 200:
-            warnings.warn(
-                response.get("ResponseMetadata"), category=UserWarning, stacklevel=3
-            )
-
-    def put_aws_params(self, name: str, value: str) -> None:
-        """Add a parameter to AWS systems manager.
-
-        Args:
-            name: Name of the parameter.
-            value: Value of the parameter.
-        """
-        try:
-            response = self.ssm_client.put_parameter(
-                Name=name, Value=value, Type="SecureString", Overwrite=True
-            )
-        except Exception as error:
-            warnings.warn(error.__str__(), category=UserWarning, stacklevel=3)
-            return
-        if response.get("ResponseMetadata", {}).get("HTTPStatusCode", 400) != 200:
-            warnings.warn(
-                response.get("ResponseMetadata"), category=UserWarning, stacklevel=3
-            )
