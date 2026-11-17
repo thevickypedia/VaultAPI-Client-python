@@ -2,8 +2,9 @@
 TABLE=$1
 AUTO_DELETE=true
 [[ "$2" == "false" ]] && AUTO_DELETE=false
-#filename=$(vaultapi-client --get-secret $2 --table $1 --env true)
-filename=$(vaultapi-client --table ${TABLE} --env true)
+VAULT_CLIENT=${VAULT_CLIENT:-vaultapi-client}
+#filename=$(${VAULT_CLIENT} --get-secret $2 --table $1 --env true)
+filename=$(${VAULT_CLIENT} --table ${TABLE} --env true)
 if [[ -n "$filename" && -f "$filename" ]]; then
   source ${filename}
   count=$(($(wc -l < "${filename}")))
