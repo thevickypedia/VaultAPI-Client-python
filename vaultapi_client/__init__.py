@@ -15,12 +15,6 @@ def commandline():
         "-V", "--version", action="store_true", help="Show version information"
     )
     parser.add_argument(
-        "--aws",
-        action="store_true",
-        help="Flag to use AWS parameter store and secrets manager to retrieve the server credentials. "
-        "Requires 'pip install VaultAPI-Client[aws]'",
-    )
-    parser.add_argument(
         "--get-secret",
         help="Retrieve a secret from Vault using the secret key, or leave it empty to get the entire table.",
     )
@@ -42,7 +36,7 @@ def commandline():
         raise ValueError("table name must be provided")
     kwargs.pop("version", None)
     env_writer = kwargs.pop("env", False)
-    data = VaultAPIClient(aws=kwargs.pop("aws", None)).decrypt(**kwargs)
+    data = VaultAPIClient().decrypt(**kwargs)
     if env_writer:
         filename = f".vault_{int(time.time())}.env"
         with open(filename, "w") as file:

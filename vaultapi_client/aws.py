@@ -21,10 +21,10 @@ class AWSClient:
             )
 
         session = boto3.Session(
-            profile_name=os.environ.get("AWS_PROFILE_NAME", ""),
-            aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID", ""),
-            aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", ""),
-            region_name=os.environ.get("AWS_DEFAULT_REGION", ""),
+            profile_name=os.environ.get("AWS_PROFILE_NAME"),
+            aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.environ.get("AWS_DEFAULT_REGION"),
         )
         self.secret_client = session.client(service_name="secretsmanager")
         self.ssm_client = session.client(service_name="ssm")
